@@ -423,7 +423,7 @@ export default function App() {
                 >
                   {t.done ? '✓ ' : '○ '}{t.title}
                 </span>
-                {t.due_date_millis && (
+                {t.due_date_millis && !t.done && (
                   <span style={{ fontSize: 11, color: theme.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
                     📅 {getDueStatus(t.due_date_millis)}
                   </span>
