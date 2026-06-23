@@ -13,3 +13,11 @@ export async function addTask(title) {
   })
   return res.json()
 }
+
+export async function toggleTask(taskId) {
+  const res = await fetch(`${BASE}/tasks/${taskId}/toggle`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error('Toggle failed')
+  return res.json()
+}

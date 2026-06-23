@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -43,3 +43,12 @@ def create_task(payload: NewTask):
     tasks.append(task)
     next_id += 1
     return task
+
+
+@app.post("/tasks/{task_id}/toggle")
+def toggle_task(task_id: int):
+    for task in tasks:
+        if task.id == task_id:
+            task.done = not task.done
+            return task
+    raise HTTPException(status_code=404, detail="Task not found")

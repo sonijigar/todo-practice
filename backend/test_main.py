@@ -56,3 +56,34 @@ class TestCreateTask:
         res = client.get("/tasks")
         titles = [t["title"] for t in res.json()]
         assert "Deploy app" in titles
+
+
+# ── POST /tasks/{task_id}/toggle ────────────────────────────
+
+
+class TestToggleTask:
+    def test_toggle_undone_to_done(self):
+        res = client.post("/tasks/2/toggle")
+        assert res.status_code == 200
+        assert res.json()["done"] is True
+
+    def test_toggle_done_to_undone(self):
+        res = client.post("/tasks/1/toggle")
+        assert res.status_code == 200
+        assert res.json()["done"] is False
+
+    def test_double_toggle_returns_to_original(self):
+        client.post("/tasks/2/toggle")  # False → True
+        res = client.post("/tasks/2/toggle")  # True → False
+        assert res.json()["done"] is False
+
+    def test_toggle_updates_task_list(self):
+        client.post("/tasks/2/toggle")
+        res = client.get("/tasks")
+        task2 = next(t for t in res.json() if t["id"] == 2)
+        assert task2["done"] is True
+
+    def test_toggle_nonexistent_task_returns_404(self):
+        res = client.post("/tasks/999/toggle")
+        assert res.status_code == 404
+        assert res.json()["detail"] == "Task not found"
