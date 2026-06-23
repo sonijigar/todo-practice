@@ -5,11 +5,11 @@ export async function getTasks() {
   return res.json()
 }
 
-export async function addTask(title) {
+export async function addTask(title, priority = 'medium') {
   const res = await fetch(`${BASE}/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, priority }),
   })
   return res.json()
 }
@@ -19,5 +19,15 @@ export async function toggleTask(taskId) {
     method: 'POST',
   })
   if (!res.ok) throw new Error('Toggle failed')
+  return res.json()
+}
+
+export async function changeTaskPriority(taskId, priority) {
+  const res = await fetch(`${BASE}/tasks/${taskId}/priority`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ priority }),
+  })
+  if (!res.ok) throw new Error('Priority change failed')
   return res.json()
 }
