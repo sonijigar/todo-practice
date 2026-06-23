@@ -1,5 +1,6 @@
 import time
 from enum import Enum
+from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,11 +38,13 @@ class Task(BaseModel):
     title: str
     done: bool = False
     priority: Priority = Priority.MEDIUM
+    due_date: Optional[int] = None
 
 
 class NewTask(BaseModel):
     title: str
     priority: Priority = Priority.MEDIUM
+    due_date: Optional[int] = None
 
 
 class ChangePriority(BaseModel):
@@ -76,7 +79,13 @@ def create_task(payload: NewTask):
     status = 500
     try:
         global next_id
-        task = Task(id=next_id, title=payload.title, priority=payload.priority)
+        logger.debug(f"Creating task '{payload.title}' with due_date timestamp: {payload.due_date}")
+        task = Task(
+            id=next_id,
+            title=payload.title,
+            priority=payload.priority,
+            due_date=payload.due_date,
+        )
         tasks.append(task)
         next_id += 1
         status = 200

@@ -111,6 +111,21 @@ class TestCreateTask:
         res = client.post("/tasks", content="", headers={"Content-Type": "application/json"})
         assert res.status_code == 422
 
+    def test_default_due_date_is_none(self):
+        res = client.post("/tasks", json={"title": "No due date"})
+        assert res.status_code == 200
+        assert res.json()["due_date"] is None
+
+    def test_explicit_due_date_success(self):
+        timestamp = 1719171917
+        res = client.post("/tasks", json={"title": "With due date", "due_date": timestamp})
+        assert res.status_code == 200
+        assert res.json()["due_date"] == timestamp
+
+    def test_invalid_due_date_returns_422(self):
+        res = client.post("/tasks", json={"title": "Invalid due date", "due_date": "not-a-timestamp"})
+        assert res.status_code == 422
+
 
 # ── POST /tasks/{task_id}/toggle ────────────────────────────
 
