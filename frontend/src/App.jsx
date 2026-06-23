@@ -47,20 +47,42 @@ const THEMES = {
 function getDueStatus(dueDateMillis) {
   if (!dueDateMillis) return ''
   const today = new Date()
-  today.setHours(23, 59, 59, 999)
-  const endOfToday = today.getTime()
+  
+  // End of local today: 23:59:59.999
+  const endOfTodayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999)
+  const endOfToday = endOfTodayLocal.getTime()
 
-  if (dueDateMillis <= endOfToday) {
-    return 'Due today'
-  }
+  // End of local yesterday: 23:59:59.999 yesterday
+  const endOfYesterdayLocal = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1, 23, 59, 59, 999)
+  const endOfYesterday = endOfYesterdayLocal.getTime()
 
-  const diffMillis = dueDateMillis - endOfToday
-  const daysDiff = Math.ceil(diffMillis / (24 * 60 * 60 * 1000))
-
-  if (daysDiff === 1) {
-    return 'Due tomorrow'
+  if (dueDateMillis < Date.now()) {
+    // Overdue logic
+    if (dueDateMillis <= endOfYesterday) {
+      const diffMillis = endOfYesterday - dueDateMillis
+      const daysDiff = Math.round(diffMillis / (24 * 60 * 60 * 1000)) + 1
+      if (daysDiff === 1) {
+        return 'Overdue yesterday'
+      } else {
+        return `Overdue ${daysDiff} days ago`
+      }
+    } else {
+      // Due today but past the current time
+      return 'Due today'
+    }
   } else {
-    return `Due in ${daysDiff} days`
+    // Future due date logic
+    if (dueDateMillis <= endOfToday) {
+      return 'Due today'
+    }
+    const diffMillis = dueDateMillis - endOfToday
+    const daysDiff = Math.ceil(diffMillis / (24 * 60 * 60 * 1000))
+
+    if (daysDiff === 1) {
+      return 'Due tomorrow'
+    } else {
+      return `Due in ${daysDiff} days`
+    }
   }
 }
 
