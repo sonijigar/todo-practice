@@ -44,6 +44,26 @@ const THEMES = {
   },
 }
 
+function getDueStatus(dueDateMillis) {
+  if (!dueDateMillis) return ''
+  const today = new Date()
+  today.setHours(23, 59, 59, 999)
+  const endOfToday = today.getTime()
+
+  if (dueDateMillis <= endOfToday) {
+    return 'Due today'
+  }
+
+  const diffMillis = dueDateMillis - endOfToday
+  const daysDiff = Math.ceil(diffMillis / (24 * 60 * 60 * 1000))
+
+  if (daysDiff === 1) {
+    return 'Due tomorrow'
+  } else {
+    return `Due in ${daysDiff} days`
+  }
+}
+
 export default function App() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
@@ -405,7 +425,7 @@ export default function App() {
                 </span>
                 {t.due_date_millis && (
                   <span style={{ fontSize: 11, color: theme.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    📅 Due: {new Date(t.due_date_millis).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    📅 {getDueStatus(t.due_date_millis)}
                   </span>
                 )}
               </div>
