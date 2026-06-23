@@ -48,6 +48,9 @@ export default function App() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('medium')
+  const [dueDate, setDueDate] = useState('')
+  const [dueTimezone, setDueTimezone] = useState('local')
+  const [showDatePicker, setShowDatePicker] = useState(false)
   const [error, setError] = useState(null)
   const [editingPriorityId, setEditingPriorityId] = useState(null)
   const [darkMode, setDarkMode] = useState(() => {
@@ -68,10 +71,37 @@ export default function App() {
   async function handleAdd(e) {
     e.preventDefault()
     if (!title.trim()) return
-    await addTask(title, priority)
-    setTasks(await getTasks())
-    setTitle('')
-    setPriority('medium')
+
+    let due_date_millis = null
+    if (dueDate) {
+      const [year, month, day] = dueDate.split('-').map(Number)
+      if (dueTimezone === 'gmt') {
+        due_date_millis = Date.UTC(year, month - 1, day, 23, 59, 59, 999)
+      } else {
+        due_date_millis = new Date(year, month - 1, day, 23, 59, 59, 999).getTime()
+      }
+
+      // Past date validation
+      const endOfTodayLocal = new Date()
+      endOfTodayLocal.setHours(0, 0, 0, 0)
+      if (due_date_millis < endOfTodayLocal.getTime()) {
+        setError("Due date cannot be in the past.")
+        return
+      }
+    }
+
+    try {
+      setError(null)
+      await addTask(title, priority, due_date_millis)
+      setTasks(await getTasks())
+      setTitle('')
+      setPriority('medium')
+      setDueDate('')
+      setDueTimezone('local')
+      setShowDatePicker(false)
+    } catch {
+      setError("Couldn't add task. Please try again.")
+    }
   }
 
   async function handleToggle(taskId) {
@@ -165,35 +195,173 @@ export default function App() {
             <div
               style={{
                 display: 'flex',
-                gap: 6,
-                marginTop: 8,
+                flexDirection: 'column',
+                gap: 10,
+                marginTop: 12,
                 animation: 'fadeIn 0.2s ease-in',
               }}
             >
-              {PRIORITIES.map((p) => {
-                const isSelected = priority === p.value
-                return (
-                  <button
-                    key={p.value}
-                    type="button"
-                    onClick={() => setPriority(p.value)}
-                    style={{
-                      flex: 1,
-                      padding: '5px 0',
-                      border: `2px solid ${p.color}`,
-                      borderRadius: 6,
-                      background: isSelected ? p.color : 'transparent',
-                      color: isSelected ? '#fff' : p.color,
-                      fontWeight: isSelected ? 700 : 500,
-                      cursor: 'pointer',
-                      fontSize: 13,
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {p.label}
-                  </button>
-                )
-              })}
+              {/* Priority Select Buttons */}
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 4 }}>Priority</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {PRIORITIES.map((p) => {
+                    const isSelected = priority === p.value
+                    return (
+                      <button
+                        key={p.value}
+                        type="button"
+                        onClick={() => setPriority(p.value)}
+                        style={{
+                          flex: 1,
+                          padding: '5px 0',
+                          border: `2px solid ${p.color}`,
+                          borderRadius: 6,
+                          background: isSelected ? p.color : 'transparent',
+                          color: isSelected ? '#fff' : p.color,
+                          fontWeight: isSelected ? 700 : 500,
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Optional Due Date Trigger Button */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  style={{
+                    background: dueDate ? (darkMode ? '#0f3460' : '#1976d2') : 'transparent',
+                    color: dueDate ? '#fff' : (darkMode ? '#e0e0e0' : '#1976d2'),
+                    border: `1px solid ${darkMode ? '#2a2a4a' : '#1976d2'}`,
+                    borderRadius: 6,
+                    padding: '6px 12px',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  📅 {dueDate ? `Due: ${dueDate} (${dueTimezone === 'gmt' ? 'GMT' : 'Local'})` : 'Set Due Date'}
+                </button>
+              </div>
+
+              {/* Time and Date Picker Drawer */}
+              {showDatePicker && (
+                <div
+                  style={{
+                    background: theme.dropdownBg,
+                    border: `1px solid ${theme.dropdownBorder}`,
+                    borderRadius: 8,
+                    padding: 12,
+                    boxShadow: theme.dropdownShadow,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 10,
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 150 }}>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 4 }}>Date</label>
+                      <input
+                        type="date"
+                        value={dueDate}
+                        min={(() => {
+                          const today = new Date()
+                          const yyyy = today.getFullYear()
+                          const mm = String(today.getMonth() + 1).padStart(2, '0')
+                          const dd = String(today.getDate()).padStart(2, '0')
+                          return `${yyyy}-${mm}-${dd}`
+                        })()}
+                        onChange={(e) => setDueDate(e.target.value)}
+                        style={{
+                          width: '100%',
+                          boxSizing: 'border-box',
+                          padding: 6,
+                          background: theme.inputBg,
+                          color: theme.text,
+                          border: `1px solid ${theme.inputBorder}`,
+                          borderRadius: 4,
+                          outline: 'none',
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: theme.textMuted, display: 'block', marginBottom: 4 }}>Timezone</label>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          type="button"
+                          onClick={() => setDueTimezone('local')}
+                          style={{
+                            padding: '5px 10px',
+                            border: `1px solid ${dueTimezone === 'local' ? (darkMode ? '#0f3460' : '#1976d2') : theme.inputBorder}`,
+                            borderRadius: 4,
+                            background: dueTimezone === 'local' ? (darkMode ? '#0f3460' : '#1976d2') : 'transparent',
+                            color: dueTimezone === 'local' ? '#fff' : theme.text,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Local
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDueTimezone('gmt')}
+                          style={{
+                            padding: '5px 10px',
+                            border: `1px solid ${dueTimezone === 'gmt' ? (darkMode ? '#0f3460' : '#1976d2') : theme.inputBorder}`,
+                            borderRadius: 4,
+                            background: dueTimezone === 'gmt' ? (darkMode ? '#0f3460' : '#1976d2') : 'transparent',
+                            color: dueTimezone === 'gmt' ? '#fff' : theme.text,
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          GMT
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {dueDate && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
+                      <span style={{ fontSize: 11, color: theme.textMuted }}>
+                        Timestamp: 11:59:59 PM in {dueTimezone === 'gmt' ? 'GMT' : 'Local'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDueDate('')
+                          setShowDatePicker(false)
+                        }}
+                        style={{
+                          background: 'transparent',
+                          color: '#d32f2f',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: 11,
+                          fontWeight: 600,
+                        }}
+                      >
+                        Remove Date
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </form>
@@ -224,17 +392,23 @@ export default function App() {
                 transition: 'border-color 0.3s ease',
               }}
             >
-              <span
-                onClick={() => handleToggle(t.id)}
-                style={{
-                  cursor: 'pointer',
-                  textDecoration: t.done ? 'line-through' : 'none',
-                  color: t.done ? theme.textMuted : 'inherit',
-                  flex: 1,
-                }}
-              >
-                {t.done ? '✓ ' : '○ '}{t.title}
-              </span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span
+                  onClick={() => handleToggle(t.id)}
+                  style={{
+                    cursor: 'pointer',
+                    textDecoration: t.done ? 'line-through' : 'none',
+                    color: t.done ? theme.textMuted : 'inherit',
+                  }}
+                >
+                  {t.done ? '✓ ' : '○ '}{t.title}
+                </span>
+                {t.due_date_millis && (
+                  <span style={{ fontSize: 11, color: theme.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
+                    📅 Due: {new Date(t.due_date_millis).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
 
               <div style={{ position: 'relative' }}>
                 <span

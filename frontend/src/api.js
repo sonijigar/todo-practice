@@ -5,11 +5,11 @@ export async function getTasks() {
   return res.json()
 }
 
-export async function addTask(title, priority = 'medium') {
+export async function addTask(title, priority = 'medium', due_date_millis = null) {
   const res = await fetch(`${BASE}/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, priority }),
+    body: JSON.stringify({ title, priority, due_date_millis }),
   })
   return res.json()
 }
