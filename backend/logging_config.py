@@ -4,7 +4,7 @@ import sys
 def setup_logging() -> None:
     """Configures Python's root logging with standard format and level."""
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         handlers=[logging.StreamHandler(sys.stdout)],
         force=True,  # Overrides uvicorn/fastapi default configurations on the root logger
