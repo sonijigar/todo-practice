@@ -1,0 +1,9 @@
+.venv/
+node_modules/
+__pycache__/
+.pytest_cache/
+.grafana-data/
+.DS_Store
+*.pyc
+git_history_temp_backup/
+
