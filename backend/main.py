@@ -54,9 +54,11 @@ next_id = 4
 @app.get("/tasks")
 def list_tasks():
     start = api_metrics.start_timer()
-    status = 200
+    status = 500
     try:
-        return sorted(tasks, key=lambda t: (t.done, PRIORITY_ORDER[t.priority]))
+        result = sorted(tasks, key=lambda t: (t.done, PRIORITY_ORDER[t.priority]))
+        status = 200
+        return result
     finally:
         api_metrics.publish(method="GET", endpoint="/tasks", status=status, start=start)
 
@@ -64,12 +66,13 @@ def list_tasks():
 @app.post("/tasks")
 def create_task(payload: NewTask):
     start = api_metrics.start_timer()
-    status = 200
+    status = 500
     try:
         global next_id
         task = Task(id=next_id, title=payload.title, priority=payload.priority)
         tasks.append(task)
         next_id += 1
+        status = 200
         return task
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks", status=status, start=start)
@@ -78,13 +81,14 @@ def create_task(payload: NewTask):
 @app.post("/tasks/{task_id}/toggle")
 def toggle_task(task_id: int):
     start = api_metrics.start_timer()
-    status = 404
+    status = 500
     try:
         for task in tasks:
             if task.id == task_id:
                 task.done = not task.done
                 status = 200
                 return task
+        status = 404
         raise HTTPException(status_code=404, detail="Task not found")
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks/{task_id}/toggle", status=status, start=start)
@@ -93,7 +97,7 @@ def toggle_task(task_id: int):
 @app.post("/tasks/{task_id}/priority")
 def change_task_priority(task_id: int, payload: ChangePriority):
     start = api_metrics.start_timer()
-    status = 404
+    status = 500
     try:
         for task in tasks:
             if task.id == task_id:
@@ -103,6 +107,7 @@ def change_task_priority(task_id: int, payload: ChangePriority):
                 task.priority = payload.priority
                 status = 200
                 return task
+        status = 404
         raise HTTPException(status_code=404, detail="Task not found")
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks/{task_id}/priority", status=status, start=start)
