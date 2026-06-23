@@ -1,4 +1,5 @@
-# Aurelian Live-Coding Practice — Tasks App (FastAPI + React)
+# Simple Live-Coding Practice — Tasks App (FastAPI + React)
+
 
 A small existing full-stack app, like what you'll get in the interview. One working
 feature (list + add tasks). Your job: **read it, run it, then add features.**
