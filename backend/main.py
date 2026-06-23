@@ -38,13 +38,13 @@ class Task(BaseModel):
     title: str
     done: bool = False
     priority: Priority = Priority.MEDIUM
-    due_date: Optional[int] = None
+    due_date_millis: Optional[int] = None
 
 
 class NewTask(BaseModel):
     title: str
     priority: Priority = Priority.MEDIUM
-    due_date: Optional[int] = None
+    due_date_millis: Optional[int] = None
 
 
 class ChangePriority(BaseModel):
@@ -79,12 +79,12 @@ def create_task(payload: NewTask):
     status = 500
     try:
         global next_id
-        logger.debug(f"Creating task '{payload.title}' with due_date timestamp: {payload.due_date}")
+        logger.debug(f"Creating task '{payload.title}' with due_date_millis timestamp: {payload.due_date_millis}")
         task = Task(
             id=next_id,
             title=payload.title,
             priority=payload.priority,
-            due_date=payload.due_date,
+            due_date_millis=payload.due_date_millis,
         )
         tasks.append(task)
         next_id += 1
