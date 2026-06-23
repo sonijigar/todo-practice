@@ -1,3 +1,4 @@
+import time
 from enum import Enum
 
 from fastapi import FastAPI, HTTPException
@@ -5,6 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from telemetry import setup_telemetry, api_metrics
+from logging_config import setup_logging, logger
+
+# Configure standard logging once at startup
+setup_logging()
 
 app = FastAPI()
 setup_telemetry(app)
@@ -61,6 +66,8 @@ def list_tasks():
         return result
     finally:
         api_metrics.publish(method="GET", endpoint="/tasks", status=status, start=start)
+        latency_ms = (time.perf_counter() - start) * 1000
+        logger.info(f"Method: GET, Path: /tasks, Status: {status}, Latency: {latency_ms:.2f}ms")
 
 
 @app.post("/tasks")
@@ -76,6 +83,8 @@ def create_task(payload: NewTask):
         return task
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks", status=status, start=start)
+        latency_ms = (time.perf_counter() - start) * 1000
+        logger.info(f"Method: POST, Path: /tasks, Status: {status}, Latency: {latency_ms:.2f}ms")
 
 
 @app.post("/tasks/{task_id}/toggle")
@@ -92,6 +101,8 @@ def toggle_task(task_id: int):
         raise HTTPException(status_code=404, detail="Task not found")
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks/{task_id}/toggle", status=status, start=start)
+        latency_ms = (time.perf_counter() - start) * 1000
+        logger.info(f"Method: POST, Path: /tasks/{task_id}/toggle, Status: {status}, Latency: {latency_ms:.2f}ms")
 
 
 @app.post("/tasks/{task_id}/priority")
@@ -111,3 +122,6 @@ def change_task_priority(task_id: int, payload: ChangePriority):
         raise HTTPException(status_code=404, detail="Task not found")
     finally:
         api_metrics.publish(method="POST", endpoint="/tasks/{task_id}/priority", status=status, start=start)
+        latency_ms = (time.perf_counter() - start) * 1000
+        logger.info(f"Method: POST, Path: /tasks/{task_id}/priority, Status: {status}, Latency: {latency_ms:.2f}ms")
+
