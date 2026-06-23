@@ -423,11 +423,14 @@ export default function App() {
                 >
                   {t.done ? '✓ ' : '○ '}{t.title}
                 </span>
-                {t.due_date_millis && !t.done && (
-                  <span style={{ fontSize: 11, color: theme.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
-                    📅 {getDueStatus(t.due_date_millis)}
-                  </span>
-                )}
+                {t.due_date_millis && !t.done && (() => {
+                  const isOverdue = t.due_date_millis < Date.now()
+                  return (
+                    <span style={{ fontSize: 11, color: isOverdue ? '#d32f2f' : theme.textMuted, display: 'flex', alignItems: 'center', gap: 4 }}>
+                      📅 {getDueStatus(t.due_date_millis)} {isOverdue && <span style={{ fontWeight: 'bold', color: '#d32f2f' }}>!!!</span>}
+                    </span>
+                  )
+                })()}
               </div>
 
               <div style={{ position: 'relative' }}>
