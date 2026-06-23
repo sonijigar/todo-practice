@@ -1,0 +1,14 @@
+# Grafana dashboard provisioning — auto-loads dashboards from this directory
+apiVersion: 1
+
+providers:
+  - name: "default"
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 10
+    options:
+      path: /Users/jigar/Workspace/Projects/aurelian-practice/observability/provisioning/dashboards
+      foldersFromFilesStructure: false
